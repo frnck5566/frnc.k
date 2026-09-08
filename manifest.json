@@ -1,12 +1,12 @@
 {
-  "name": "Frang Daily",
+  "name": "frnc.k Daily",
   "short_name": "Daily",
   "description": "Personal health and fitness tracker",
   "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#EFE6DA",
-  "theme_color": "#EFE6DA",
+  "theme_color": "#EDE9E2",
   "icons": [
     { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
