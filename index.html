@@ -103,7 +103,19 @@ select.plan option{color:var(--ink)}
 .lift{border:none;background:none;color:var(--sea);cursor:pointer;font-size:.75rem;padding:2px 4px;font-family:inherit;text-decoration:underline;text-underline-offset:2px}
 
 .sets{padding:2px 0 12px 35px;border-top:1px solid var(--line-soft);margin-top:-1px}
-.lastline{font-size:.76rem;color:var(--muted);margin:8px 0 8px}
+.blk{padding:10px 0 4px;border-top:1px dashed var(--line-soft)}
+.blk:first-of-type{border-top:none}
+.blkh{display:flex;align-items:baseline;gap:8px}
+.blkh .mv{font-size:.88rem;font-weight:600;flex:1;min-width:0}
+.movechips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
+.movechip{border:1px solid var(--line);background:none;border-radius:999px;padding:6px 11px;font:inherit;font-size:.78rem;color:var(--sea);cursor:pointer}
+.movechip:hover{background:var(--line-soft)}
+.customadd{display:flex;gap:6px;margin-top:2px}
+.customadd input{flex:1;min-width:0;border:1px solid var(--line);background:none;border-radius:9px;padding:7px 9px;font:inherit;font-size:.8rem;color:inherit}
+.customadd button{border:none;border-radius:9px;background:var(--sea);color:#fff;padding:0 13px;font:inherit;font-size:.8rem;cursor:pointer}
+.total{margin-top:12px;padding-top:10px;border-top:1px solid var(--line-soft);font-size:.82rem}
+.total b{font-weight:600}
+.lastline{font-size:.76rem;color:var(--muted);margin:3px 0 7px}
 .lastline b{color:var(--sea);font-weight:600}
 .setrow{display:flex;align-items:center;gap:7px;margin-bottom:6px}
 .setrow span.i{font-size:.73rem;color:var(--muted);width:34px;flex:none}
@@ -465,6 +477,16 @@ function dayRec(k){
 const save=()=>store.set('ff:log',log);
 const volOf=sets=>(sets||[]).reduce((s,x)=>s+(+x.w||0)*(+x.r||0),0);
 const repsOf=sets=>(sets||[]).reduce((s,x)=>s+(+x.r||0),0);
+const exVol=e=>(e.blocks||[]).reduce((s,b)=>s+volOf(b.sets),0);
+const exReps=e=>(e.blocks||[]).reduce((s,b)=>s+repsOf(b.sets),0);
+function migrate(){
+  Object.keys(log).forEach(k=>{
+    (log[k].ex||[]).forEach(e=>{
+      if(e.sets&&!e.blocks){e.blocks=[{move:e.n,sets:e.sets}];delete e.sets}
+      if(!e.blocks&&LIB.some(l=>l.n===e.n&&l.lift))e.blocks=[];
+    });
+  });
+}
 
 /* ---------- seed ---------- */
 function seed(){
@@ -484,7 +506,11 @@ function seed(){
       const e={id:'e'+i,n:lib.n,met:lib.met,min:lib.min,done:Math.random()>0.25};
       if(lib.lift&&e.done){
         if(i%7===0)load+=1;
-        e.sets=[{w:load,r:10},{w:load,r:10},{w:load,r:8}];
+        const mv=MOVES[lib.n]||[lib.n];
+        e.blocks=[
+          {move:mv[0],sets:[{w:load,r:10},{w:load,r:10},{w:load,r:8}]},
+          {move:mv[1]||mv[0],sets:[{w:load+2,r:10},{w:load+2,r:10}]}
+        ];
       }
       r.ex=[e];
       r.water=Math.round((1400+Math.random()*800)/GLASS)*GLASS;
@@ -501,7 +527,7 @@ function seed(){
   t.ex=SUGGEST[new Date().getDay()].map((n,i)=>{
     const l=LIB.find(x=>x.n===n);
     const e={id:'t'+i,n:l.n,met:l.met,min:l.min,done:i===0};
-    if(l.lift&&i===0)e.sets=[{w:load,r:10},{w:load,r:10}];
+    if(l.lift&&i===0){const mv=MOVES[l.n]||[l.n];e.blocks=[{move:mv[0],sets:[{w:load,r:10},{w:load,r:10}]}]}
     return e;
   });
   t.water=750; t.pages=12; t.g={tradeAM:true,content:true};
@@ -522,13 +548,20 @@ function last30(){
 }
 
 /* ---------- movement + progressive overload ---------- */
-function lastSession(name,beforeKey){
+function lastMove(move,beforeKey){
   const keys=Object.keys(log).filter(k=>k<beforeKey).sort().reverse();
   for(const k of keys){
-    const e=(log[k].ex||[]).find(x=>x.n===name&&x.sets&&x.sets.length);
-    if(e)return{k:k,e:e};
+    for(const e of (log[k].ex||[])){
+      const b=(e.blocks||[]).find(x=>x.move===move&&x.sets&&x.sets.length);
+      if(b)return{k:k,b:b};
+    }
   }
   return null;
+}
+function knownMoves(){
+  const s=new Set();
+  Object.keys(log).forEach(k=>(log[k].ex||[]).forEach(e=>(e.blocks||[]).forEach(b=>{if(b.move)s.add(b.move)})));
+  return Array.from(s);
 }
 function movement(){
   const chips=document.getElementById('chips'); chips.innerHTML='';
@@ -537,7 +570,7 @@ function movement(){
     const b=document.createElement('button');
     b.className='chip'+(sug.includes(l.n)?' sug':'');
     b.textContent='+ '+l.n;
-    b.onclick=()=>{today.ex.push({id:'x'+Date.now(),n:l.n,met:l.met,min:l.min,done:true,sets:l.lift?[]:undefined});save();movement();summary();drawCal();drawVol()};
+    b.onclick=()=>{const it={id:'x'+Date.now(),n:l.n,met:l.met,min:l.min,done:true};if(l.lift){it.blocks=[];openSets[it.id]=true}today.ex.push(it);save();movement();summary();drawCal();drawVol()};
     chips.appendChild(b);
   });
   document.getElementById('exsub').textContent='Suggested for '+DAYS[cursor.getDay()]+': '+sug.join(' and ')+'. Tap whatever you actually did.';
@@ -553,7 +586,7 @@ function movement(){
     r.innerHTML='<button class="tick" aria-label="Mark done">&#10003;</button>'+
       '<div class="body"><div class="nm">'+e.n+'</div>'+
       '<div class="mt">'+(e.done?'Done':'Planned')+
-      (isLift?' &middot; <button class="lift">'+(openSets[e.id]?'hide sets':((e.sets&&e.sets.length)?e.sets.length+' sets':'log sets'))+'</button>':'')+
+      (isLift?' &middot; <button class="lift">'+(openSets[e.id]?'hide exercises':((e.blocks&&e.blocks.length)?e.blocks.length+' exercises':'log exercises'))+'</button>':'')+
       '</div></div>'+
       '<input class="mins" type="number" min="0" value="'+e.min+'" aria-label="minutes">'+
       '<div class="kc '+(e.done?'':'off')+'">'+burn(e.met,e.min)+'</div>'+
@@ -562,68 +595,114 @@ function movement(){
     r.querySelector('.mins').oninput=ev=>{e.min=Math.max(0,+ev.target.value||0);r.querySelector('.kc').textContent=burn(e.met,e.min);save();summary()};
     r.querySelector('.del').onclick=()=>{today.ex=today.ex.filter(x=>x.id!==e.id);delete openSets[e.id];save();movement();summary();drawCal();drawVol()};
     const lb=r.querySelector('.lift');
-    if(lb)lb.onclick=()=>{openSets[e.id]=!openSets[e.id];if(!e.sets)e.sets=[];movement()};
+    if(lb)lb.onclick=()=>{openSets[e.id]=!openSets[e.id];if(!e.blocks)e.blocks=[];movement()};
     list.appendChild(r);
 
     if(isLift&&openSets[e.id]){
       const box=document.createElement('div'); box.className='sets';
-      const prev=lastSession(e.n,iso(cursor));
-      let ptxt='First time logging this. Whatever you lift today becomes the number to beat.';
-      if(prev){
-        const pd=new Date(prev.k+'T00:00:00');
-        const pv=volOf(prev.e.sets);
-        ptxt='Last time '+pd.getDate()+' '+MON[pd.getMonth()]+' &middot; <b>'+
-          prev.e.sets.map(s=>(+s.w?s.w+'kg':'BW')+'&times;'+s.r).join(', ')+'</b>';
-      }
-      box.innerHTML='<div class="lastline">'+ptxt+'</div>';
-      const hint=MOVES[e.n]?'<div class="mt" style="margin-bottom:8px">Ideas: '+MOVES[e.n].join(' &middot; ')+'</div>':'';
-      box.insertAdjacentHTML('beforeend',hint);
+      if(!e.blocks)e.blocks=[];
 
-      (e.sets||[]).forEach((s,si)=>{
-        const sr=document.createElement('div'); sr.className='setrow';
-        sr.innerHTML='<span class="i">Set '+(si+1)+'</span>'+
-          '<input type="number" min="0" step="0.5" value="'+(s.w||'')+'" placeholder="kg" aria-label="weight">'+
-          '<em>kg &times;</em>'+
-          '<input type="number" min="0" value="'+(s.r||'')+'" placeholder="reps" aria-label="reps">'+
-          '<em>reps</em><button class="del" aria-label="Remove set">&times;</button>';
-        const ins=sr.querySelectorAll('input');
-        ins[0].oninput=ev=>{s.w=+ev.target.value||0;save();updateVolLine()};
-        ins[1].oninput=ev=>{s.r=+ev.target.value||0;save();updateVolLine()};
-        sr.querySelector('.del').onclick=()=>{e.sets.splice(si,1);save();movement();drawVol()};
-        box.appendChild(sr);
+      /* pick an exercise to add */
+      const picked=e.blocks.map(b=>b.move);
+      const opts=(MOVES[e.n]||[]).concat(knownMoves().filter(m=>!(MOVES[e.n]||[]).includes(m)));
+      const chipwrap=document.createElement('div'); chipwrap.className='movechips';
+      opts.filter(m=>!picked.includes(m)).forEach(m=>{
+        const c=document.createElement('button'); c.className='movechip'; c.textContent='+ '+m;
+        c.onclick=()=>{
+          const p=lastMove(m,iso(cursor));
+          e.blocks.push({move:m,sets:p?p.b.sets.map(s=>({w:s.w,r:s.r})):[{w:0,r:10}]});
+          save();movement();drawVol();
+        };
+        chipwrap.appendChild(c);
       });
+      box.appendChild(chipwrap);
 
-      const add=document.createElement('button'); add.className='addset'; add.textContent='+ add set';
-      add.onclick=()=>{
-        const lastSet=(e.sets&&e.sets.length)?e.sets[e.sets.length-1]:(prev&&prev.e.sets[0]);
-        e.sets.push({w:lastSet?lastSet.w:0,r:lastSet?lastSet.r:10});
+      const ca=document.createElement('div'); ca.className='customadd';
+      ca.innerHTML='<input placeholder="or type another exercise" aria-label="exercise name"><button>Add</button>';
+      const cin=ca.querySelector('input');
+      ca.querySelector('button').onclick=()=>{
+        const v=cin.value.trim(); if(!v)return;
+        const p=lastMove(v,iso(cursor));
+        e.blocks.push({move:v,sets:p?p.b.sets.map(s=>({w:s.w,r:s.r})):[{w:0,r:10}]});
         save();movement();drawVol();
       };
-      box.appendChild(add);
+      cin.onkeydown=ev=>{if(ev.key==='Enter')ca.querySelector('button').click()};
+      box.appendChild(ca);
 
-      const v=document.createElement('div'); v.className='vol'; v.id='vol-'+e.id;
+      if(!e.blocks.length){
+        box.insertAdjacentHTML('beforeend','<div class="empty">Pick the exercises you actually did. Each one keeps its own history.</div>');
+      }
+
+      e.blocks.forEach((b,bi)=>{
+        const blk=document.createElement('div'); blk.className='blk';
+        const prev=lastMove(b.move,iso(cursor));
+        let ptxt='First time logging this one. Today becomes the number to beat.';
+        if(prev){
+          const pd=new Date(prev.k+'T00:00:00');
+          ptxt='Last time '+pd.getDate()+' '+MON[pd.getMonth()]+' &middot; <b>'+
+            prev.b.sets.map(s=>(+s.w?s.w+'kg':'BW')+'&times;'+s.r).join(', ')+'</b>';
+        }
+        blk.innerHTML='<div class="blkh"><div class="mv">'+b.move+'</div>'+
+          '<button class="del" aria-label="Remove exercise">&times;</button></div>'+
+          '<div class="lastline">'+ptxt+'</div>';
+        blk.querySelector('.del').onclick=()=>{e.blocks.splice(bi,1);save();movement();drawVol()};
+
+        (b.sets||[]).forEach((s,si)=>{
+          const sr=document.createElement('div'); sr.className='setrow';
+          sr.innerHTML='<span class="i">Set '+(si+1)+'</span>'+
+            '<input type="number" min="0" step="0.5" value="'+(s.w||'')+'" placeholder="kg" aria-label="weight">'+
+            '<em>kg &times;</em>'+
+            '<input type="number" min="0" value="'+(s.r||'')+'" placeholder="reps" aria-label="reps">'+
+            '<em>reps</em><button class="del" aria-label="Remove set">&times;</button>';
+          const ins=sr.querySelectorAll('input');
+          ins[0].oninput=ev=>{s.w=+ev.target.value||0;save();updateVolLine()};
+          ins[1].oninput=ev=>{s.r=+ev.target.value||0;save();updateVolLine()};
+          sr.querySelector('.del').onclick=()=>{b.sets.splice(si,1);save();movement();drawVol()};
+          blk.appendChild(sr);
+        });
+
+        const add=document.createElement('button'); add.className='addset'; add.textContent='+ add set';
+        add.onclick=()=>{
+          const ls=(b.sets&&b.sets.length)?b.sets[b.sets.length-1]:(prev&&prev.b.sets[0]);
+          b.sets.push({w:ls?ls.w:0,r:ls?ls.r:10});
+          save();movement();drawVol();
+        };
+        blk.appendChild(add);
+        const bv=document.createElement('div'); bv.className='vol'; bv.id='bv-'+e.id+'-'+bi;
+        blk.appendChild(bv);
+        box.appendChild(blk);
+      });
+
+      const v=document.createElement('div'); v.className='total'; v.id='vol-'+e.id;
       box.appendChild(v);
       list.appendChild(box);
-      updateVolLine(e,prev);
+      updateVolLine(e);
     }
   });
   document.getElementById('exdone').textContent=done+' done';
 }
-function updateVolLine(e,prev){
-  if(!e){ /* refresh all open */
-    today.ex.forEach(x=>{if(openSets[x.id])updateVolLine(x,lastSession(x.n,iso(cursor)))});
+function updateVolLine(e){
+  if(!e){
+    today.ex.forEach(x=>{if(openSets[x.id])updateVolLine(x)});
     drawVol(); return;
   }
-  const el=document.getElementById('vol-'+e.id); if(!el)return;
-  const cur=volOf(e.sets), pv=prev?volOf(prev.e.sets):null;
-  if(!cur){ el.innerHTML=repsOf(e.sets)?'<b>'+repsOf(e.sets)+' reps</b> total, bodyweight':''; return }
-  let s='Volume today <b>'+Math.round(cur)+' kg</b>';
-  if(pv){
-    const d=cur-pv;
-    s+=d>0?' &middot; <span class="up">+'+Math.round(d)+' kg vs last time</span>'
-       :(d<0?' &middot; '+Math.round(d)+' kg vs last time':' &middot; same as last time');
-  }
-  el.innerHTML=s;
+  (e.blocks||[]).forEach((b,bi)=>{
+    const el=document.getElementById('bv-'+e.id+'-'+bi); if(!el)return;
+    const cur=volOf(b.sets), prev=lastMove(b.move,iso(cursor));
+    const pv=prev?volOf(prev.b.sets):null;
+    if(!cur){el.innerHTML=repsOf(b.sets)?'<b>'+repsOf(b.sets)+' reps</b> bodyweight':'';return}
+    let s='<b>'+Math.round(cur)+' kg</b> moved';
+    if(pv){
+      const d=cur-pv;
+      s+=d>0?' &middot; <span class="up">+'+Math.round(d)+' kg vs last time</span>'
+        :(d<0?' &middot; '+Math.round(d)+' kg vs last time':' &middot; same as last time');
+    }
+    el.innerHTML=s;
+  });
+  const tot=document.getElementById('vol-'+e.id); if(!tot)return;
+  const cv=exVol(e);
+  tot.innerHTML=cv?'Session total <b>'+Math.round(cv)+' kg</b> across '+e.blocks.length+' exercises'
+    :(exReps(e)?'Session total <b>'+exReps(e)+' reps</b>':'');
 }
 
 /* ---------- meals, water, supplements ---------- */
@@ -733,7 +812,7 @@ function drawTrend(){
 function drawVol(){
   const days=last30(), svg=document.getElementById('volchart');
   const W=700,H=200,L=46,R=12,T=14,B=26, iw=W-L-R, ih=H-T-B;
-  const vals=days.map(x=>x.r?(x.r.ex||[]).reduce((s,e)=>s+volOf(e.sets),0):0);
+  const vals=days.map(x=>x.r?(x.r.ex||[]).reduce((s,e)=>s+exVol(e),0):0);
   const hi=Math.max.apply(null,vals.concat([1]));
   const bw=iw/days.length*0.6;
   const x=i=>L+(i+0.5)/days.length*iw, y=v=>T+ih-v/hi*ih;
@@ -894,7 +973,7 @@ document.getElementById('impFile').onchange=e=>{
       if(!d||!d.log)throw 0;
       const n=Object.keys(d.log).length;
       if(!confirm('Import '+n+' days? Days already on this phone will be replaced by the file.'))return;
-      log=Object.assign(log,d.log);
+      log=Object.assign(log,d.log); migrate();
       if(d.goals)goals=Object.assign({},DEFAULT_GOALS,d.goals);
       if(d.fast!==undefined){fast=d.fast;await store.set('ff:fast',fast)}
       await save(); await store.set('ff:goals',goals);
@@ -961,6 +1040,7 @@ function openDay(){
   fast=await store.get('ff:fast');
   log=await store.get('ff:log')||{};
   if(!Object.keys(log).length){seed();await save()}
+  migrate();
   const ws=Object.keys(log).sort().map(k=>log[k].weight).filter(v=>v);
   if(ws.length)weightKg=ws[ws.length-1];
   ['gKcal','gP','gC','gF'].forEach((id,i)=>document.getElementById(id).value=goals[['kcal','p','c','f'][i]]);
