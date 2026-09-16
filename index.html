@@ -191,6 +191,43 @@ textarea.note{width:100%;border:1px solid var(--line);background:none;border-rad
 .gitem .gh{display:flex;justify-content:space-between;font-size:.85rem}
 .gitem .gh i{font-style:normal;color:var(--muted);font-size:.78rem}
 
+.prow{display:flex;align-items:center;gap:12px;padding:13px 0;border-top:1px solid var(--line-soft)}
+.prow:first-of-type{border-top:none}
+.prow.now{background:rgba(78,112,118,.07);border-radius:12px;padding:13px 10px;margin:0 -10px}
+.pday{flex:none;width:52px;font-size:.8rem;font-weight:600;color:var(--sea)}
+.prow.now .pday{color:var(--gold)}
+.pbody{flex:1;min-width:0}
+.pbody .nm{font-size:.9rem;font-weight:500}
+.pbody .mt{font-size:.75rem;color:var(--muted)}
+.ptime{flex:none;font-size:.78rem;color:var(--muted);text-align:right;width:62px}
+.plog{border:1px solid var(--line);background:none;border-radius:9px;padding:6px 10px;font:inherit;font-size:.76rem;color:var(--sea);cursor:pointer;flex:none}
+.plog:hover{background:var(--line-soft)}
+.plog.on{background:var(--sea);border-color:var(--sea);color:#fff}
+.daypick{display:flex;gap:5px;margin:2px 0 14px;overflow-x:auto;padding-bottom:2px}
+.daypick button{flex:none;border:1px solid var(--line);background:none;border-radius:999px;padding:7px 13px;font:inherit;font-size:.8rem;color:var(--muted);cursor:pointer}
+.daypick button.on{background:var(--deep);border-color:var(--deep);color:#F6F1E9}
+.daypick button.today{border-color:var(--gold);color:var(--gold)}
+.daypick button.on.today{color:#F6F1E9}
+.sess h3{font-size:.78rem;font-weight:600;color:var(--sea);text-transform:uppercase;letter-spacing:.06em;margin:18px 0 6px}
+.sess h3:first-child{margin-top:4px}
+.li{display:flex;gap:9px;font-size:.87rem;padding:5px 0;align-items:baseline}
+.li .b{width:5px;height:5px;border-radius:50%;background:var(--line);flex:none;margin-top:8px}
+.lift-row{display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-top:1px solid var(--line-soft)}
+.lift-row:first-of-type{border-top:none}
+.lnum{flex:none;width:20px;font-size:.78rem;color:var(--muted);font-weight:600;padding-top:2px}
+.lbody{flex:1;min-width:0}
+.lbody .nm{font-size:.92rem;font-weight:600}
+.lbody .cue{font-size:.76rem;color:var(--muted);margin-top:1px}
+.lspec{flex:none;text-align:right}
+.lspec b{display:block;font-size:.85rem;font-weight:600}
+.lspec span{font-size:.76rem;color:var(--muted)}
+.tread{background:rgba(78,112,118,.08);border-radius:14px;padding:12px 14px;margin-top:8px}
+.tread .tt{font-size:.88rem;font-weight:600;margin-bottom:6px}
+.tread table{width:100%;border-collapse:collapse;font-size:.8rem}
+.tread td{padding:4px 0;vertical-align:top}
+.tread td:first-child{color:var(--muted);width:78px}
+.note-list{font-size:.85rem;line-height:1.7;padding-left:18px;margin:6px 0 0}
+.note-list li{margin-bottom:6px}
 .data{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
 .data button{border:1px solid var(--line);background:none;border-radius:10px;padding:9px 15px;font:inherit;font-size:.86rem;color:var(--ink);cursor:pointer}
 .data button.primary{background:var(--deep);color:#F6F1E9;border-color:var(--deep)}
@@ -213,6 +250,7 @@ footer{max-width:1020px;margin:22px auto 0;font-size:.77rem;color:var(--muted);l
 <div class="seg" role="tablist">
   <button id="tabBody" class="on">Body</button>
   <button id="tabGrowth">Growth</button>
+  <button id="tabPlan">Plan</button>
 </div>
 
 <!-- ================= BODY ================= -->
@@ -377,6 +415,47 @@ footer{max-width:1020px;margin:22px auto 0;font-size:.77rem;color:var(--muted);l
 
 </div><!-- /viewGrowth -->
 
+<!-- ================= PLAN ================= -->
+<div id="viewPlan" hidden>
+  <section class="panel">
+    <div class="ph"><h2>Weekly plan</h2><em id="planNote"></em></div>
+    <p class="sub">Three lifting days, two Zone 2 walks, Pilates and one easy day.</p>
+    <div id="plantable"></div>
+  </section>
+
+  <section class="panel">
+    <div class="ph"><h2 id="sessTitle">Session</h2><em id="sessTime"></em></div>
+    <p class="sub" id="sessSub"></p>
+    <div class="daypick" id="daypick"></div>
+    <div class="sess" id="sess"></div>
+    <div class="data" style="margin-top:16px"><button class="primary" id="logSess">Log this session</button></div>
+    <div class="msg" id="sessMsg"></div>
+  </section>
+
+  <section class="panel">
+    <div class="ph"><h2>Something extra</h2><em id="extraDay"></em></div>
+    <p class="sub">A drop-in class, a swim, a long walk. Anything outside the plan gets added to the day you are looking at, on top of what is already there.</p>
+    <div class="chips" id="extraChips"></div>
+    <div class="customadd" style="margin-top:8px">
+      <input id="extraName" placeholder="or type it, e.g. group pilates class" aria-label="activity name">
+      <input id="extraMin" type="number" min="0" placeholder="min" style="flex:none;width:64px;text-align:center" aria-label="minutes">
+      <button id="extraAdd">Add</button>
+    </div>
+    <div class="msg" id="extraMsg"></div>
+  </section>
+
+  <section class="panel">
+    <div class="ph"><h2>How to run it</h2></div>
+    <ul class="note-list">
+      <li><b>Lifting days.</b> Three or four exercises, 3 sets of 10. Pick the last two reps to feel genuinely hard, otherwise the weight is too light.</li>
+      <li><b>Going up.</b> When all 3 sets hit 10 clean reps, add 1 to 2 kg next time. That is the whole method.</li>
+      <li><b>Zone 2.</b> Incline high enough that you are breathing but could still hold a conversation. Speed matters less than incline.</li>
+      <li><b>Sore legs on a walk day?</b> Keep the walk, drop the incline. Moving beats skipping.</li>
+      <li><b>Missed a day?</b> Do not double up. Pick the plan back up on the next day as written.</li>
+    </ul>
+  </section>
+</div><!-- /viewPlan -->
+
 <section class="panel chartcard">
   <div class="ph"><h2>Backup</h2><em>Your data lives only on this device</em></div>
   <p class="sub">Export once a month and keep the file somewhere safe. Import brings everything back on a new phone.</p>
@@ -417,31 +496,95 @@ const GLASS=250;
 
 const LIB=[
   {n:'Pilates',met:3.0,min:60},
-  {n:'Incline treadmill walk',met:4.5,min:30},
-  {n:'Brisk walk',met:4.3,min:30},
-  {n:'Lower body strength',met:4.0,min:45,lift:1},
-  {n:'Upper body strength',met:3.5,min:45,lift:1},
-  {n:'Full body strength and core',met:4.0,min:45,lift:1},
-  {n:'Light HIIT',met:6.0,min:25},
+  {n:'Incline treadmill walk',met:4.5,min:32},
+  {n:'Brisk walk',met:4.3,min:25},
+  {n:'Lower body strength',met:4.0,min:30,lift:1},
+  {n:'Upper body and core',met:3.5,min:30,lift:1},
+  {n:'Full body strength',met:4.0,min:30,lift:1},
+  {n:'Stretch',met:2.3,min:10},
   {n:'Yoga and stretch',met:2.5,min:30},
+  {n:'Light HIIT',met:6.0,min:25},
   {n:'Easy jog',met:7.0,min:25},
   {n:'Cycling',met:6.0,min:35},
   {n:'Swimming',met:5.8,min:30},
   {n:'Walking errands',met:3.0,min:30}
 ];
-const SUGGEST={
-  0:['Yoga and stretch','Brisk walk'],
-  1:['Lower body strength','Incline treadmill walk'],
-  2:['Light HIIT','Pilates'],
-  3:['Full body strength and core','Incline treadmill walk'],
-  4:['Brisk walk','Incline treadmill walk'],
-  5:['Yoga and stretch','Pilates'],
-  6:['Lower body strength','Incline treadmill walk']
+/* the weekly plan, one row per weekday (0 = Sunday) */
+const PLAN={
+  1:{label:'Weight training, lower body and glutes',detail:'squat, lunge, glute bridge',time:'30 min',items:[{n:'Lower body strength',min:30}]},
+  2:{label:'Incline treadmill walk, Zone 2',detail:'steady pace, still able to talk',time:'30-35 min',items:[{n:'Incline treadmill walk',min:32}]},
+  3:{label:'Weight training, core and upper body',detail:'',time:'30 min',items:[{n:'Upper body and core',min:30}]},
+  4:{label:'Incline treadmill walk, Zone 2',detail:'',time:'30-35 min',items:[{n:'Incline treadmill walk',min:32}]},
+  5:{label:'Pilates and stretching',detail:'your usual class, plus 10 min stretch',time:'1 hr + 10 min',items:[{n:'Pilates',min:60},{n:'Stretch',min:10}]},
+  6:{label:'Weight training, full body',detail:'',time:'30 min',items:[{n:'Full body strength',min:30}]},
+  0:{label:'Active rest',detail:'easy walk plus a full body stretch',time:'20-30 min',items:[{n:'Brisk walk',min:25},{n:'Stretch',min:10}]}
 };
+/* the full coached session for each weekday */
+const SESSION={
+  1:{title:'Lower body and glutes',sub:'The main event for legs and glutes',
+    warm:['5 min easy treadmill walk, 4.0 km/h, no incline','Bodyweight squat x 10','Glute bridge x 15','Leg swings, 10 each side'],
+    lifts:[
+      {m:'Goblet squat',s:3,r:10,kg:6,cue:'Hold the weight at your chest. Sit down between your heels, chest tall.'},
+      {m:'Romanian deadlift',s:3,r:10,kg:8,cue:'Push hips back, slight knee bend. Feel the stretch behind the thigh, not the lower back.'},
+      {m:'Walking lunge',s:3,r:10,kg:0,cue:'10 steps each leg. Bodyweight for the first two weeks.'},
+      {m:'Hip thrust',s:3,r:12,kg:8,cue:'Shoulders on the sofa edge. Squeeze at the top for one full second.'}
+    ],
+    rest:'60 to 90 seconds between sets',
+    cardio:{n:'Incline treadmill walk',min:10,rows:[['Incline','6%'],['Speed','4.5 km/h'],['Why','Flushes the legs and adds easy fat burning while you are already warm']]},
+    end:['Hip flexor stretch, 45 s each side','Hamstring stretch, 45 s each side','Figure-4 glute stretch, 45 s each side']},
+
+  2:{title:'Zone 2 incline walk',sub:'Your biggest lever right now',
+    warm:['3 min at 4.0 km/h, no incline'],lifts:[],
+    cardio:{n:'Incline treadmill walk',min:32,rows:[['Warm up','3 min · 4.0 km/h · 0%'],['Main set','25 min · 4.5 to 5.0 km/h · 8 to 10%'],['Cool down','4 min · 3.5 km/h · 0%'],['Effort','You can talk in full sentences but would rather not sing'],['Whoop','Stay in your Zone 2 band. If it creeps to Zone 3, drop the incline, not the time']]},
+    end:['Calf stretch, 45 s each side','Hamstring stretch, 45 s each side']},
+
+  3:{title:'Core and upper body',sub:'Posture, shoulders, waistline',
+    warm:['5 min easy walk','Arm circles, 20 forward and back','Cat cow x 10'],
+    lifts:[
+      {m:'Shoulder press',s:3,r:10,kg:3,cue:'One dumbbell each hand. Ribs down, do not arch the lower back.'},
+      {m:'Bent-over row',s:3,r:10,kg:4,cue:'Hinge forward, pull the elbows past your ribs, squeeze the shoulder blades.'},
+      {m:'Chest press',s:3,r:10,kg:4,cue:'Lying on the floor is fine. Elbows at roughly 45 degrees.'},
+      {m:'Plank',s:3,r:30,kg:0,cue:'30 seconds per set. Squeeze glutes so the hips do not sag.',unit:'sec'},
+      {m:'Dead bug',s:3,r:10,kg:0,cue:'10 each side. Lower back stays pressed into the floor the whole time.'}
+    ],
+    rest:'60 seconds between sets',
+    cardio:{n:'Incline treadmill walk',min:10,rows:[['Incline','6%'],['Speed','4.5 km/h']]},
+    end:['Chest doorway stretch, 45 s','Thoracic twist, 45 s each side']},
+
+  4:{title:'Zone 2 incline walk',sub:'Same as Tuesday, one notch harder',
+    warm:['3 min at 4.0 km/h, no incline'],lifts:[],
+    cardio:{n:'Incline treadmill walk',min:32,rows:[['Warm up','3 min · 4.0 km/h · 0%'],['Main set','25 min · 4.5 to 5.0 km/h · 9 to 11%'],['Cool down','4 min · 3.5 km/h · 0%'],['Progress','Add 1% incline every second week, up to about 12%']]},
+    end:['Calf stretch, 45 s each side','Quad stretch, 45 s each side']},
+
+  5:{title:'Pilates and stretching',sub:'The class you already go to',
+    warm:[],lifts:[],
+    cardio:{n:'Pilates',min:60,rows:[['Class','Your usual 60 min session'],['Ask the coach','For more glute and hamstring loading, tell them you are lifting three days a week now'],['After class','10 min stretch while you are still warm']]},
+    end:['Full body stretch, 10 min','Hip flexor, hamstring, quad, glute, chest, 45 s each side']},
+
+  6:{title:'Full body',sub:'Everything once, nothing to failure',
+    warm:['5 min easy walk','Bodyweight squat x 10','Arm circles, 20 each way'],
+    lifts:[
+      {m:'Goblet squat',s:3,r:10,kg:6,cue:'Same weight as Monday, or 1 kg lighter if Monday left you sore.'},
+      {m:'Romanian deadlift',s:3,r:10,kg:8,cue:'Slow on the way down, three seconds.'},
+      {m:'Shoulder press',s:3,r:10,kg:3,cue:''},
+      {m:'Bent-over row',s:3,r:10,kg:4,cue:''},
+      {m:'Plank',s:3,r:30,kg:0,cue:'30 seconds per set.',unit:'sec'}
+    ],
+    rest:'60 to 90 seconds between sets',
+    cardio:{n:'Incline treadmill walk',min:10,rows:[['Incline','5%'],['Speed','4.5 km/h']]},
+    end:['Full body stretch, 5 min']},
+
+  0:{title:'Active rest',sub:'Move gently, do not train',
+    warm:[],lifts:[],
+    cardio:{n:'Brisk walk',min:25,rows:[['Where','Outside if you can, treadmill if not'],['Speed','4.0 to 4.5 km/h, flat'],['Rule','If it feels like training, slow down']]},
+    end:['Full body stretch, 10 min','Hip flexor, hamstring, quad, glute, calf, chest']}
+};
+const SUGGEST={};
+Object.keys(PLAN).forEach(d=>{SUGGEST[d]=PLAN[d].items.map(i=>i.n)});
 const MOVES={
   'Lower body strength':['Goblet squat','Romanian deadlift','Walking lunge','Glute bridge','Hip thrust'],
-  'Upper body strength':['Shoulder press','Bent-over row','Chest press','Lateral raise'],
-  'Full body strength and core':['Goblet squat','Bent-over row','Shoulder press','Plank']
+  'Upper body and core':['Shoulder press','Bent-over row','Chest press','Plank','Dead bug'],
+  'Full body strength':['Goblet squat','Bent-over row','Shoulder press','Romanian deadlift','Plank']
 };
 const SUPPS=[
   {slot:'Morning, empty stomach',note:'15 to 30 minutes before breakfast',items:['Lacto-in10 probiotic sachet','Cerahidra collagen sachet, 10 to 15 min after the probiotic']},
@@ -585,7 +728,7 @@ function movement(){
     const r=document.createElement('div'); r.className='row'+(e.done?' done':'');
     r.innerHTML='<button class="tick" aria-label="Mark done">&#10003;</button>'+
       '<div class="body"><div class="nm">'+e.n+'</div>'+
-      '<div class="mt">'+(e.done?'Done':'Planned')+
+      '<div class="mt">'+(e.extra?'Extra &middot; ':'')+(e.done?'Done':'Planned')+
       (isLift?' &middot; <button class="lift">'+(openSets[e.id]?'hide exercises':((e.blocks&&e.blocks.length)?e.blocks.length+' exercises':'log exercises'))+'</button>':'')+
       '</div></div>'+
       '<input class="mins" type="number" min="0" value="'+e.min+'" aria-label="minutes">'+
@@ -904,6 +1047,139 @@ function growthCharts(){
   });
 }
 
+/* ---------- weekly plan ---------- */
+let planDay=null;
+function planView(){
+  if(planDay===null)planDay=cursor.getDay();
+  const wrap=document.getElementById('plantable'); wrap.innerHTML='';
+  const order=[1,2,3,4,5,6,0], cd=cursor.getDay();
+  order.forEach(d=>{
+    const p=PLAN[d];
+    const r=document.createElement('div'); r.className='prow'+(d===cd?' now':'');
+    r.innerHTML='<div class="pday">'+DAYS[d].slice(0,3)+'</div>'+
+      '<div class="pbody"><div class="nm">'+p.label+'</div>'+
+      (p.detail?'<div class="mt">'+p.detail+'</div>':'')+'</div>'+
+      '<div class="ptime">'+p.time+'</div>';
+    r.onclick=()=>{planDay=d;planView()};
+    r.style.cursor='pointer';
+    wrap.appendChild(r);
+  });
+  document.getElementById('planNote').textContent='3 lifting days a week';
+
+  /* day picker */
+  const dp=document.getElementById('daypick'); dp.innerHTML='';
+  order.forEach(d=>{
+    const b=document.createElement('button');
+    b.className=(d===planDay?'on ':'')+(d===cd?'today':'');
+    b.textContent=DAYS[d].slice(0,3);
+    b.onclick=()=>{planDay=d;planView()};
+    dp.appendChild(b);
+  });
+
+  const s=SESSION[planDay], p=PLAN[planDay];
+  document.getElementById('sessTitle').textContent=DAYS[planDay]+' · '+s.title;
+  document.getElementById('sessTime').textContent=p.time;
+  document.getElementById('sessSub').textContent=s.sub;
+
+  const box=document.getElementById('sess'); box.innerHTML='';
+  const html=[];
+
+  if(s.warm.length){
+    html.push('<h3>Warm up</h3>');
+    s.warm.forEach(w=>html.push('<div class="li"><span class="b"></span><span>'+w+'</span></div>'));
+  }
+
+  if(s.lifts.length){
+    html.push('<h3>Main work</h3>');
+    s.lifts.forEach((l,i)=>{
+      const prev=lastMove(l.m,iso(cursor));
+      const load=prev?('last time '+prev.b.sets.map(x=>(+x.w?x.w+'kg':'BW')+'x'+x.r).join(', ')):(l.kg?'start at '+l.kg+' kg':'bodyweight');
+      html.push('<div class="lift-row"><div class="lnum">'+(i+1)+'</div>'+
+        '<div class="lbody"><div class="nm">'+l.m+'</div>'+
+        (l.cue?'<div class="cue">'+l.cue+'</div>':'')+
+        '<div class="cue">'+load+'</div></div>'+
+        '<div class="lspec"><b>'+l.s+' x '+l.r+(l.unit==='sec'?'s':'')+'</b>'+
+        '<span>'+(l.kg?l.kg+' kg':'body')+'</span></div></div>');
+    });
+    html.push('<div class="li" style="color:var(--muted);font-size:.8rem"><span class="b"></span><span>Rest '+s.rest+'</span></div>');
+  }
+
+  if(s.cardio){
+    html.push('<h3>'+(s.lifts.length?'Finisher':'The session')+'</h3>');
+    html.push('<div class="tread"><div class="tt">'+s.cardio.n+' · '+s.cardio.min+' min</div><table>'+
+      s.cardio.rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>').join('')+'</table></div>');
+  }
+
+  if(s.end.length){
+    html.push('<h3>Cool down</h3>');
+    s.end.forEach(e=>html.push('<div class="li"><span class="b"></span><span>'+e+'</span></div>'));
+  }
+  box.innerHTML=html.join('');
+
+  const btn=document.getElementById('logSess');
+  btn.textContent=planDay===cd?'Log this session':'Log it on '+DAYS[cursor.getDay()]+' anyway';
+  extras();
+}
+
+function addExtra(name,min,met){
+  const lib=LIB.find(l=>l.n===name);
+  const it={id:'e'+Date.now(),n:name,met:met||(lib?lib.met:3.5),min:min||(lib?lib.min:30),done:true,extra:true};
+  if(lib&&lib.lift)it.blocks=[];
+  today.ex.push(it);
+  save(); movement(); summary(); drawCal(); planView();
+  document.getElementById('extraMsg').textContent=name+' added to '+DAYS[cursor.getDay()]+'. It shows up in Movement marked as extra.';
+  setTimeout(()=>{const m=document.getElementById('extraMsg');if(m)m.textContent=''},6000);
+}
+function extras(){
+  document.getElementById('extraDay').textContent='Adding to '+(isToday(cursor)?'today':DAYS[cursor.getDay()]);
+  const wrap=document.getElementById('extraChips'); wrap.innerHTML='';
+  const planned=SUGGEST[cursor.getDay()]||[];
+  LIB.filter(l=>!planned.includes(l.n)).forEach(l=>{
+    const b=document.createElement('button'); b.className='chip'; b.textContent='+ '+l.n;
+    b.onclick=()=>addExtra(l.n,l.min,l.met);
+    wrap.appendChild(b);
+  });
+}
+
+function logSession(){
+  const s=SESSION[planDay];
+  let added=0;
+  if(s.lifts.length){
+    const liftName=PLAN[planDay].items.map(i=>i.n).find(n=>(LIB.find(l=>l.n===n)||{}).lift);
+    const lib=LIB.find(l=>l.n===liftName);
+    if(lib){
+      let e=today.ex.find(x=>x.n===liftName);
+      if(!e){e={id:'p'+Date.now(),n:liftName,met:lib.met,min:lib.min,done:false,blocks:[]};today.ex.push(e);added++}
+      if(!e.blocks)e.blocks=[];
+      s.lifts.forEach(l=>{
+        if(e.blocks.some(b=>b.move===l.m))return;
+        const prev=lastMove(l.m,iso(cursor));
+        const sets=[];
+        for(let i=0;i<l.s;i++){
+          const ps=prev&&prev.b.sets[i];
+          sets.push({w:ps?ps.w:l.kg,r:ps?ps.r:l.r});
+        }
+        e.blocks.push({move:l.m,sets:sets});
+      });
+      openSets[e.id]=true;
+    }
+  }
+  if(s.cardio){
+    const lib=LIB.find(l=>l.n===s.cardio.n);
+    if(lib&&!today.ex.some(x=>x.n===s.cardio.n)){
+      today.ex.push({id:'c'+Date.now(),n:s.cardio.n,met:lib.met,min:s.cardio.min,done:false});
+      added++;
+    }
+  }
+  if(s.end.length&&!today.ex.some(x=>x.n==='Stretch')&&(SESSION[planDay].end.join(' ').indexOf('10 min')>-1)){
+    const lib=LIB.find(l=>l.n==='Stretch');
+    today.ex.push({id:'s'+Date.now(),n:'Stretch',met:lib.met,min:10,done:false});
+  }
+  save(); movement(); summary(); drawCal(); drawVol();
+  document.getElementById('sessMsg').textContent='Added to Movement with your last weights filled in. Tick each one off as you go.';
+  setTimeout(()=>setView('body'),700);
+}
+
 /* ---------- fasting ---------- */
 const pad2=n=>String(n).padStart(2,'0');
 const hhmm=ms=>{const d=new Date(ms);return pad2(d.getHours())+':'+pad2(d.getMinutes())};
@@ -1017,13 +1293,24 @@ document.getElementById('prev').onclick=()=>{cursor.setDate(cursor.getDate()-1);
 document.getElementById('next').onclick=()=>{cursor.setDate(cursor.getDate()+1);openSets={};openDay()};
 document.getElementById('tabBody').onclick=()=>setView('body');
 document.getElementById('tabGrowth').onclick=()=>setView('growth');
+document.getElementById('tabPlan').onclick=()=>setView('plan');
+document.getElementById('logSess').onclick=logSession;
+document.getElementById('extraAdd').onclick=()=>{
+  const n=document.getElementById('extraName'), m=document.getElementById('extraMin');
+  const v=n.value.trim(); if(!v)return;
+  addExtra(v,Math.max(0,+m.value||30),3.5);
+  n.value=''; m.value='';
+};
+document.getElementById('extraName').onkeydown=ev=>{if(ev.key==='Enter')document.getElementById('extraAdd').click()};
 function setView(v){
   view=v;
-  document.getElementById('tabBody').classList.toggle('on',v==='body');
-  document.getElementById('tabGrowth').classList.toggle('on',v==='growth');
-  document.getElementById('viewBody').hidden=v!=='body';
-  document.getElementById('viewGrowth').hidden=v!=='growth';
-  if(v==='growth'){growth();growthCharts()}else{drawTrend();drawCal();drawVol()}
+  ['body','growth','plan'].forEach(x=>{
+    document.getElementById('tab'+x[0].toUpperCase()+x.slice(1)).classList.toggle('on',v===x);
+    document.getElementById('view'+x[0].toUpperCase()+x.slice(1)).hidden=v!==x;
+  });
+  if(v==='growth'){growth();growthCharts()}
+  else if(v==='plan'){planDay=cursor.getDay();planView()}
+  else{drawTrend();drawCal();drawVol()}
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -1031,7 +1318,7 @@ function openDay(){
   today=dayRec(iso(cursor)); head();
   movement(); meals(); water(); supplements(); summary();
   drawTrend(); drawCal(); drawVol();
-  growth(); growthCharts();
+  growth(); growthCharts(); planView();
 }
 
 /* ---------- boot ---------- */

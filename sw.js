@@ -1,4 +1,4 @@
-const CACHE = 'frang-daily-v4';
+const CACHE = 'frang-daily-v7';
 const FILES = ['./', './index.html', './manifest.json', './hero.jpg', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
