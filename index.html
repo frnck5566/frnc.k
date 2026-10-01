@@ -594,13 +594,19 @@ const SUPPS=[
   {slot:'Before bed',note:'30 to 60 minutes before sleep',items:['Souljoy x1']}
 ];
 const GROWTH=[
-  {k:'chinese',n:'Chinese lesson',w:'Mon, Wed, Thu at 14:00',t:3},
   {k:'tradeAM',n:'Market analysis and plan',w:'Daily at 07:00',t:7},
-  {k:'tradePM',n:'Trading study and practice',w:'Daily at 17:00',t:7},
-  {k:'content',n:"Rika's Matcha content",w:'Daily at 11:00',t:7},
-  {k:'juice',n:'Cold-pressed juice business',w:'Daily at 15:00',t:7},
-  {k:'reflect',n:'Reflection and gratitude',w:'Daily at 19:30',t:7}
+  {k:'exercise',n:'Exercise, as planned',w:'Daily · ticks itself from Movement',t:7,auto:1},
+  {k:'web',n:'Web promotion and ads',w:'Daily',t:7},
+  {k:'content',n:"Rika's Matcha content and social",w:'Daily at 11:00',t:7},
+  {k:'chinese',n:'Chinese lesson',w:'Mon, Wed, Thu at 14:00',t:3},
+  {k:'ai',n:'Research passive income from AI',w:'3 times a week',t:3}
 ];
+/* exercise ticks itself once anything in Movement is marked done */
+function gOn(rec,key){
+  if(!rec)return false;
+  if(key==='exercise')return !!(rec.g&&rec.g.exercise)||(rec.ex||[]).some(e=>e.done);
+  return !!(rec.g&&rec.g[key]);
+}
 const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -659,7 +665,8 @@ function seed(){
       r.water=Math.round((1400+Math.random()*800)/GLASS)*GLASS;
       r.pages=Math.random()>0.25?10+Math.round(Math.random()*15):0;
       GROWTH.forEach(g=>{
-        const on=g.t===3?([1,3,4].includes(d.getDay())&&Math.random()>0.25):Math.random()>0.35;
+        if(g.auto)return;
+        const on=g.t===3?(Math.random()>0.45):Math.random()>0.35;
         if(on)r.g[g.k]=true;
       });
     }
@@ -734,7 +741,7 @@ function movement(){
       '<input class="mins" type="number" min="0" value="'+e.min+'" aria-label="minutes">'+
       '<div class="kc '+(e.done?'':'off')+'">'+burn(e.met,e.min)+'</div>'+
       '<button class="del" aria-label="Remove">&times;</button>';
-    r.querySelector('.tick').onclick=()=>{e.done=!e.done;save();movement();summary();drawCal()};
+    r.querySelector('.tick').onclick=()=>{e.done=!e.done;save();movement();summary();drawCal();growth();growthCharts()};
     r.querySelector('.mins').oninput=ev=>{e.min=Math.max(0,+ev.target.value||0);r.querySelector('.kc').textContent=burn(e.met,e.min);save();summary()};
     r.querySelector('.del').onclick=()=>{today.ex=today.ex.filter(x=>x.id!==e.id);delete openSets[e.id];save();movement();summary();drawCal();drawVol()};
     const lb=r.querySelector('.lift');
@@ -993,20 +1000,20 @@ function drawCal(){
 function weekStart(d){const x=new Date(d);const n=(x.getDay()+6)%7;x.setDate(x.getDate()-n);x.setHours(0,0,0,0);return x}
 function weekCount(key){
   const s=weekStart(cursor); let c=0;
-  for(let i=0;i<7;i++){const d=new Date(s);d.setDate(s.getDate()+i);const r=log[iso(d)];if(r&&r.g&&r.g[key])c++}
+  for(let i=0;i<7;i++){const d=new Date(s);d.setDate(s.getDate()+i);if(gOn(log[iso(d)],key))c++}
   return c;
 }
 function growth(){
   const l=document.getElementById('glist'); l.innerHTML='';
   let done=0;
   GROWTH.forEach(g=>{
-    const on=!!today.g[g.k]; if(on)done++;
+    const on=gOn(today,g.k); if(on)done++;
     const c=weekCount(g.k);
     const r=document.createElement('div'); r.className='grow'+(on?' done':'');
     r.innerHTML='<button class="sw" aria-label="'+g.n+'" aria-pressed="'+on+'"></button>'+
       '<div class="body"><div class="nm">'+g.n+'</div><div class="mt">'+g.w+'</div></div>'+
       '<div class="wk"><b>'+c+'</b>/'+g.t+'</div>';
-    r.querySelector('.sw').onclick=()=>{today.g[g.k]=!today.g[g.k];save();growth();growthCharts()};
+    r.querySelector('.sw').onclick=()=>{today.g[g.k]=!gOn(today,g.k);save();growth();growthCharts()};
     l.appendChild(r);
   });
   document.getElementById('gdone').textContent=done+' of '+GROWTH.length;
@@ -1039,10 +1046,10 @@ function growthCharts(){
   const wrap=document.getElementById('gcharts'); wrap.innerHTML='';
   const days=last30(), ck=iso(cursor);
   GROWTH.forEach(g=>{
-    const hits=days.filter(x=>x.r&&x.r.g&&x.r.g[g.k]).length;
+    const hits=days.filter(x=>gOn(x.r,g.k)).length;
     const d=document.createElement('div'); d.className='gitem';
     d.innerHTML='<div class="gh"><span>'+g.n+'</span><i>'+hits+' of 30 days</i></div>'+
-      '<div class="strip">'+days.map(x=>'<i class="'+((x.r&&x.r.g&&x.r.g[g.k])?'on':'')+(x.k===ck?' today':'')+'"></i>').join('')+'</div>';
+      '<div class="strip">'+days.map(x=>'<i class="'+(gOn(x.r,g.k)?'on':'')+(x.k===ck?' today':'')+'"></i>').join('')+'</div>';
     wrap.appendChild(d);
   });
 }
